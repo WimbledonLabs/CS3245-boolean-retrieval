@@ -7,6 +7,7 @@ import nltk
 from collections import defaultdict
 
 from serde import serialize, deserialize
+from skiplist import skiplist
 
 stemmer = nltk.stem.PorterStemmer()
 
@@ -32,9 +33,11 @@ dictionary = defaultdict(tuple)
 
 with open(args.postings, 'wb') as postings_file:
     for word, docs in index.items():
-        s = serialize(sorted(list(docs)))
+        s = serialize(skiplist(sorted(list(docs))))
         dictionary[word] = (len(docs), len(s), postings_file.tell())
         postings_file.write(s)
 
 with open(args.dictionary, 'wb') as dict_file:
     dict_file.write(serialize(dictionary))
+
+pprint(sorted([(w, len(s)) for w, s in index.items()], key=lambda x: x[1]))

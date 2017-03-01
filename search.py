@@ -8,69 +8,15 @@ from collections import defaultdict
 from serde import serialize, deserialize
 
 import re
+import operator
+
+from skiplist import skiplist
+
+from functools import reduce
+
 
 TERM_TOTAL = 1000
 stemmer = nltk.stem.PorterStemmer()
-
-# TBD, this should be a super-awesome skip list
-ALL_DOCS = []
-
-def mergeUnion(*doc_lists):
-    result = doc_lists[0]
-    for child in doc_lists[1:]:
-        a = result
-        b = child
-        result = []
-
-        cursor_a = 0
-        cursor_b = 0
-
-        while cursor_a < len(a) or cursor_b < len(b):
-            if cursor_a == len(a):
-                # We are at the end of list a, grab all of the rest of list b
-                result.extend(b[cursor_b:])
-                break
-
-            elif cursor_b == len(b):
-                # We are at the end of list b, grab all of the rest of list a
-                result.extend(b[cursor_a:])
-                break
-
-            elif a[cursor_a] < b[cursor_b]:
-                result.append(a[cursor_a])
-                cursor_a += 1
-            elif a[cursor_a] > b[cursor_b]:
-                result.append(b[cursor_b])
-                cursor_b += 1
-            elif a[cursor_a] == b[cursor_b]:
-                result.append(a[cursor_a])
-                cursor_a += 1
-                cursor_b += 1
-    return result
-
-def mergeIntersection(*doc_lists):
-    result = doc_lists[0]
-    for child in doc_lists[1:]:
-        a = result
-        b = child
-        result = []
-
-        cursor_a = 0
-        cursor_b = 0
-
-        while cursor_a < len(a) and cursor_b < len(b):
-            if a[cursor_a] < b[cursor_b]:
-                cursor_a += 1
-            elif a[cursor_a] > b[cursor_b]:
-                cursor_b += 1
-            elif a[cursor_a] == b[cursor_b]:
-                result.append(a[cursor_a])
-                cursor_a += 1
-                cursor_b += 1
-    return result
-
-def invert(docs):
-    return list(doc for doc in ALL_DOCS if doc not in docs)
 
 class Lexer():
     def __init__(self, query):
@@ -100,7 +46,7 @@ class Expr():
 
 class Not(Expr):
     def compute(self, dictionary, postings_file):
-        return invert(self.children[0].compute(dictionary, postings_file))
+        return corpus - self.children[0].compute(dictionary, postings_file)
 
     def __len__(self):
         return TERM_TOTAL - len(self.children[0])
@@ -110,10 +56,9 @@ class And(Expr):
         inputs = [c.compute(dict_file, postings) for c in self.children]
 
         # It's best to sort by length first since that reduces
-        # the number of passes through the lists
+        # the number of passes through long lists
         inputs = sorted(inputs, key=lambda x: len(x))
-
-        return mergeIntersection(*inputs)
+        return reduce(operator.__and__, inputs)
 
     def __len__(self):
         # Worst case estimate is that they're all the same
@@ -128,7 +73,7 @@ class Or(Expr):
         # smaller ones)
         inputs = [c.compute(dict_file, postings) for c in self.children]
         inputs = sorted(inputs, key=lambda x: len(x))
-        return mergeUnion(*inputs)
+        return reduce(operator.__or__, inputs)
 
     def __len__(self):
         # Worst case estimate is that they're all disjoint
@@ -147,7 +92,7 @@ class Word():
             count, size, pos = dictionary[key]
             postings_file.seek(pos)
             return deserialize(postings_file.read(size))
-        return []
+        return skiplist()
 
     def __len__(self):
         # Worst case estimate is that they're all disjoint
@@ -207,9 +152,9 @@ dictionary = deserialize(dict_file.read())
 
 count, size, pos = dictionary["ALL_DOCS"]
 postings_file.seek(pos)
-ALL_DOCS = deserialize(postings_file.read(size))
+corpus = deserialize(postings_file.read(size))
 
 for query in query_file:
     query = query.strip()
     result = parse_query(query).compute(dictionary, postings_file)
-    output.write("\n".join(str(i) for i in result) + '\n')
+    output.write(" ".join(str(i) for i in result) + '\n')
