@@ -14,7 +14,6 @@ from skiplist import skiplist
 
 from functools import reduce
 
-
 TERM_TOTAL = 1000
 stemmer = nltk.stem.PorterStemmer()
 
@@ -48,9 +47,6 @@ class Not(Expr):
     def compute(self, dictionary, postings_file):
         return corpus - self.children[0].compute(dictionary, postings_file)
 
-    def __len__(self):
-        return TERM_TOTAL - len(self.children[0])
-
 class And(Expr):
     def compute(self, dict_file, postings):
         inputs = [c.compute(dict_file, postings) for c in self.children]
@@ -59,10 +55,6 @@ class And(Expr):
         # the number of passes through long lists
         inputs = sorted(inputs, key=lambda x: len(x))
         return reduce(operator.__and__, inputs)
-
-    def __len__(self):
-        # Worst case estimate is that they're all the same
-        return max(len(c) for c in self.children)
 
 class Or(Expr):
     def compute(self, dict_file, postings):
@@ -74,10 +66,6 @@ class Or(Expr):
         inputs = [c.compute(dict_file, postings) for c in self.children]
         inputs = sorted(inputs, key=lambda x: len(x))
         return reduce(operator.__or__, inputs)
-
-    def __len__(self):
-        # Worst case estimate is that they're all disjoint
-        return sum(len(c) for c in self.children)
 
 class Word():
     def __init__(self, word):
@@ -93,10 +81,6 @@ class Word():
             postings_file.seek(pos)
             return deserialize(postings_file.read(size))
         return skiplist()
-
-    def __len__(self):
-        # Worst case estimate is that they're all disjoint
-        return sum(len(c) for c in self.children)
 
 
 def parse_query(query):
@@ -122,7 +106,7 @@ def term():
 
 def factor():
     if lexer.consume("NOT"):
-        return Not(expr())
+        return Not(factor())
     elif lexer.consume("("):
         e = expr()
         lexer.consume(")")
@@ -156,5 +140,6 @@ corpus = deserialize(postings_file.read(size))
 
 for query in query_file:
     query = query.strip()
+    print(parse_query(query))
     result = parse_query(query).compute(dictionary, postings_file)
-    output.write(" ".join(str(i) for i in result) + '\n')
+    output.write("\n".join(str(i) for i in result) + '\n')
