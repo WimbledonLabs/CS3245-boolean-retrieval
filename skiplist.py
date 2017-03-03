@@ -19,7 +19,6 @@ def splitItems(aitem, bitem):
     return (aval, bval, atuple, btuple)
 
 class skiplist():
-    # ...also known as sorted lists with some fast set-like operations
     def __init__(self, items=[]):
         # We assume the list is already sorted, we don't want the overhead of
         # sorting, or checking if it's sorted

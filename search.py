@@ -19,7 +19,7 @@ stemmer = nltk.stem.PorterStemmer()
 
 class Lexer():
     def __init__(self, query):
-        self.terms = list(reversed(re.findall("\(|\)|[a-zA-Z\.']+", query)))
+        self.terms = list(reversed(re.findall("\(|\)|[a-zA-Z0-9\.']+", query)))
         #print(self.terms)
 
     def inspect(self, token):
