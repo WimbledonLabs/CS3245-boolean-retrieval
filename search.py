@@ -19,7 +19,7 @@ stemmer = nltk.stem.PorterStemmer()
 
 class Lexer():
     def __init__(self, query):
-        self.terms = list(reversed(re.findall("\(|\)|AND|OR|[a-zA-Z]+", query)))
+        self.terms = list(reversed(re.findall("\(|\)|[a-zA-Z\.']+", query)))
         #print(self.terms)
 
     def inspect(self, token):
@@ -72,7 +72,8 @@ class Word():
         self.word = word
 
     def __repr__(self):
-        return repr(self.word)
+        key = stemmer.stem(self.word)
+        return repr(key)
 
     def compute(self, dictionary, postings_file):
         key = stemmer.stem(self.word)
@@ -142,4 +143,4 @@ for query in query_file:
     query = query.strip()
     print(parse_query(query))
     result = parse_query(query).compute(dictionary, postings_file)
-    output.write("\n".join(str(i) for i in result) + '\n')
+    output.write(" ".join(str(i) for i in result) + '\n')

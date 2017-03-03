@@ -40,4 +40,3 @@ with open(args.postings, 'wb') as postings_file:
 with open(args.dictionary, 'wb') as dict_file:
     dict_file.write(serialize(dictionary))
 
-pprint(sorted([(w, len(s)) for w, s in index.items()], key=lambda x: x[1]))
