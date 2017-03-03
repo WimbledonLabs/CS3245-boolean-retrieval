@@ -1,5 +1,8 @@
 This is the README file for E0147972's submission
 
+== Python Version ==
+I'm using Python Version 3.5 for this assignment.
+
 == General Notes about this assignment ==
 
 The search and indexing functionality is divided between seach.py and index.py

@@ -2,6 +2,9 @@ from sys import maxsize
 from math import floor, ceil
 
 def splitItems(aitem, bitem):
+    """ Helper function for spliting two elements of a skiplist into 4-tuple
+    which can be used to merging
+    """
     if isinstance(aitem, tuple):
         atuple = aitem[1]
         aval = aitem[0]
@@ -59,6 +62,9 @@ class skiplist():
         return len(self.items)
 
     def __or__(self, other):
+        """ Operator overload for the '|' operator.
+        Returns a skiplist containing values which appear in either of the
+        lists """
         # Skip lists don't really buy us anything here...
         out = []
 
@@ -94,6 +100,9 @@ class skiplist():
         return skiplist(out)
 
     def __and__(self, other):
+        """ Operator overload for the '&' operator.
+        Returns a skiplist containing values which appear in both of the
+        lists """
         # There are 5 cases we must consider at each step
         # 1) Taking the skip pointer for a
         # 2) Taking the skip pointer for b
@@ -137,6 +146,13 @@ class skiplist():
         return skiplist(out)
 
     def __sub__(corpus, self):
+        """ Operator overload for the '-' operator.
+        Returns a skiplist containing values which appear on the left list, but
+        not the right list """
+        # The method signature is wonky since this was originally __rsub__
+        # implemented incorrectly, and reuses code from the other merge
+        # operations
+
         other = corpus
         # Skip lists don't really buy us anything here...
         out = []
